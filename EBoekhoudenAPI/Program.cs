@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using EBoekhoudenAPI.EbApi;
+using Newtonsoft.Json;
 
 namespace EBoekhoudenAPI
 {
@@ -16,14 +18,21 @@ namespace EBoekhoudenAPI
     {
         public static void Main (string[] args)
         {
+            var config = Config.Get();
 
+            var mutations = JsonConvert.DeserializeObject<IEnumerable<Mutation>>(config.Path);
+            
+            SendMutations(config.Username, config.SecurityCode1, config.SecurityCode1, mutations);
+
+            Console.WriteLine("Press any key to exit");
+            Console.ReadLine();
         }
 
-        public static void SendMutation(
+        public static void SendMutations(
             string username,
             string securityCode1,
             string securityCode2,
-            Mutation mutation
+            IEnumerable<Mutation> mutations
             )
         {
             using (soapAppSoapClient client = new soapAppSoapClient())
@@ -34,10 +43,13 @@ namespace EBoekhoudenAPI
                 if (!string.IsNullOrEmpty(result.ErrorMsg.LastErrorCode))
                     throw new Exception("Cannot connect to E-Boekhouden");
 
-                var response = client.AddMutatie(sessionId, securityCode2, mutation);
+                foreach (var mutation in mutations)
+                {
+                    var response = client.AddMutatie(sessionId, securityCode2, mutation);
 
-                if (response.ErrorMsg.LastErrorCode != null)
-                    Console.WriteLine(response.ErrorMsg.LastErrorDescription);
+                    if (response.ErrorMsg.LastErrorCode != null)
+                        Console.WriteLine(response.ErrorMsg.LastErrorDescription);
+                }
             }
         }
     }
