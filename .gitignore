@@ -4,3 +4,4 @@
 .vs/EBoekhoudenAPI/v15/Server/sqlite3/storage.ide
 EBoekhoudenAPI/bin/
 EBoekhoudenAPI/obj/
+EBoekhoudenAPI/Config.cs

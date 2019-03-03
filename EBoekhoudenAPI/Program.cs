@@ -9,32 +9,32 @@ using Newtonsoft.Json;
 
 namespace EBoekhoudenAPI
 {
-    public class Mutation : cMutatie
-    {
-
-    }
-
     public class Program
     {
         public static void Main (string[] args)
         {
             var config = Config.Get();
+            var json = File.ReadAllText(config.AbsolutePath);
+            var mutations = JsonConvert.DeserializeObject<IEnumerable<cMutatie>>(json);
 
-            var mutations = JsonConvert.DeserializeObject<IEnumerable<Mutation>>(config.Path);
-            
-            SendMutations(config.Username, config.SecurityCode1, config.SecurityCode1, mutations);
+            if (SendMutations(config.Username, config.SecurityCode1, config.SecurityCode2, mutations))
+            {
+                File.WriteAllText(config.AbsolutePath, string.Empty);
+            }
 
             Console.WriteLine("Press any key to exit");
             Console.ReadLine();
         }
 
-        public static void SendMutations(
+        public static bool SendMutations(
             string username,
             string securityCode1,
             string securityCode2,
-            IEnumerable<Mutation> mutations
+            IEnumerable<cMutatie> mutations
             )
         {
+            bool withoutErrors = true;
+
             using (soapAppSoapClient client = new soapAppSoapClient())
             {
                 var result = client.OpenSession(username, securityCode1, securityCode2);
@@ -48,9 +48,14 @@ namespace EBoekhoudenAPI
                     var response = client.AddMutatie(sessionId, securityCode2, mutation);
 
                     if (response.ErrorMsg.LastErrorCode != null)
+                    {
                         Console.WriteLine(response.ErrorMsg.LastErrorDescription);
+                        withoutErrors = false;
+                    }
                 }
             }
+
+            return withoutErrors;
         }
     }
 }
